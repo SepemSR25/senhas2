@@ -1,380 +1,193 @@
-// Configuração da API
-const API_BASE_URL = '/api';
+const API_BASE_URL = window.location.origin;
 
-// Funções da API para Salas
-class SalaAPI {
-    static async listarSalas() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/salas`);
-            
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao listar salas:', error);
-            throw error;
+async function fetchSalas() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/salas`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    }
-
-    static async criarSala(nome, descricao = '') {
-        try {
-            const response = await fetch(`${API_BASE_URL}/salas`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ nome, descricao })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao criar sala:', error);
-            throw error;
-        }
-    }
-
-    static async obterSala(salaId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/salas/${salaId}`);
-            
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao obter sala:', error);
-            throw error;
-        }
-    }
-
-    static async obterEstatisticasSala(salaId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/salas/${salaId}/estatisticas`);
-            
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao obter estatísticas da sala:', error);
-            throw error;
-        }
-    }
-
-    static async deletarSala(salaId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/salas/${salaId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao deletar sala:', error);
-            throw error;
-        }
-    }
-
-    static async atualizarSala(salaId, dados) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/salas/${salaId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(dados)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao atualizar sala:', error);
-            throw error;
-        }
-    }
-
-    // Alias para deletarSala para compatibilidade
-    static async excluirSala(salaId) {
-        return this.deletarSala(salaId);
+        const salas = await response.json();
+        return salas;
+    } catch (error) {
+        console.error("Erro ao buscar salas:", error);
+        return [];
     }
 }
 
-// Funções da API para Senhas (atualizadas para trabalhar com salas)
-class SenhaAPI {
-    static async gerarSenha(roomId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/senhas/gerar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ room_id: roomId })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao gerar senha:', error);
-            throw error;
+async function gerarSenha(roomId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/senhas/gerar`, {
+            method: \"POST\",
+            headers: {
+                \"Content-Type\": \"application/json\"
+            },
+            body: JSON.stringify({ room_id: roomId })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Erro ao gerar senha:", error);
+        return null;
     }
+}
 
-    static async listarSenhasEspera(roomId = null) {
-        try {
-            let url = `${API_BASE_URL}/senhas/espera`;
-            if (roomId) {
-                url += `?room_id=${roomId}`;
-            }
-            
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao listar senhas em espera:', error);
-            throw error;
+async function chamarSenha(roomId, profissional) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/senhas/chamar`, {
+            method: \"POST\",
+            headers: {
+                \"Content-Type\": \"application/json\"
+            },
+            body: JSON.stringify({ room_id: roomId, profissional: profissional })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Erro ao chamar senha:", error);
+        return null;
     }
+}
 
-    static async chamarSenha(roomId, profissional) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/senhas/chamar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ room_id: roomId, profissional })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao chamar próxima senha:', error);
-            throw error;
+async function chamarUltimaSenhaNovamente(roomId, profissional) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/senhas/chamar-ultima-novamente`, {
+            method: \"POST\",
+            headers: {
+                \"Content-Type\": \"application/json\"
+            },
+            body: JSON.stringify({ room_id: roomId, profissional: profissional })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Erro ao chamar última senha novamente:", error);
+        return null;
     }
+}
 
-    static async chamarSenhaEspecifica(roomId, numero, profissional) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/senhas/chamar/${numero}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ room_id: roomId, profissional })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao chamar senha específica:', error);
-            throw error;
+async function fetchSenhasEmEspera(roomId = null) {
+    try {
+        const url = roomId ? `${API_BASE_URL}/api/senhas/espera?room_id=${roomId}` : `${API_BASE_URL}/api/senhas/espera`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const senhas = await response.json();
+        return senhas;
+    } catch (error) {
+        console.error("Erro ao buscar senhas em espera:", error);
+        return [];
     }
+}
 
-    static async finalizarAtendimento(roomId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/senhas/finalizar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ room_id: roomId })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao finalizar atendimento:', error);
-            throw error;
+async function fetchSenhasChamadas(roomId = null) {
+    try {
+        const url = roomId ? `${API_BASE_URL}/api/senhas/chamadas?room_id=${roomId}` : `${API_BASE_URL}/api/senhas/chamadas`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const senhas = await response.json();
+        return senhas;
+    } catch (error) {
+        console.error("Erro ao buscar senhas chamadas:", error);
+        return [];
     }
+}
 
-    static async obterSenhaAtual(roomId) {
-        try {
-            const url = roomId ? `${API_BASE_URL}/senhas/atual?room_id=${roomId}` : `${API_BASE_URL}/senhas/atual`;
-            const response = await fetch(url);
-            
+async function fetchTodasSenhasChamadas() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/senhas/todas-chamadas`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const senhas = await response.json();
+        return senhas;
+    } catch (error) {
+        console.error("Erro ao buscar todas as senhas chamadas:", error);
+        return [];
+    }
+}
+
+async function fetchEstatisticas(roomId = null) {
+    try {
+        const url = roomId ? `${API_BASE_URL}/api/senhas/estatisticas?room_id=${roomId}` : `${API_BASE_URL}/api/senhas/estatisticas`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const stats = await response.json();
+        return stats;
+    } catch (error) {
+        console.error("Erro ao buscar estatísticas:", error);
+        return null;
+    }
+}
+
+async function resetarAtendimento() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/senhas/resetar-atendimento`, {
+            method: \"POST\",
+            headers: {
+                \"Content-Type\": \"application/json\"
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Erro ao resetar atendimento:", error);
+        return null;
+    }
+}
+
+async function fetchSenhaAtual(roomId = null) {
+    try {
+        const url = roomId ? `${API_BASE_URL}/api/senhas/atual?room_id=${roomId}` : `${API_BASE_URL}/api/senhas/atual`;
+        const response = await fetch(url);
+        if (!response.ok) {
             if (response.status === 404) {
-                return null; // Nenhuma senha em atendimento
+                return null; // Nenhuma senha sendo chamada no momento
             }
-            
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao obter senha atual:', error);
-            throw error;
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    }
-
-    static async obterTodasSenhasChamadas() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/senhas/todas-chamadas`);
-            
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao obter todas as senhas chamadas:', error);
-            throw error;
-        }
-    }
-
-    static async listarTodasSenhas(roomId = null) {
-        try {
-            let url = `${API_BASE_URL}/senhas`;
-            if (roomId) {
-                url += `?room_id=${roomId}`;
-            }
-            
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao listar todas as senhas:', error);
-            throw error;
-        }
-    }
-
-    static async resetSistema(roomId = null) {
-        try {
-            const body = roomId ? { room_id: roomId } : {};
-            
-            const response = await fetch(`${API_BASE_URL}/senhas/reset`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(body)
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao resetar sistema:', error);
-            throw error;
-        }
-    }
-
-    // Alias para compatibilidade
-    static async listarSenhas(roomId) {
-        return this.listarTodasSenhas(roomId);
-    }
-
-    static async resetarSala(roomId) {
-        return this.resetSistema(roomId);
-    }
-
-    static async resetarAtendimento() {
-        try {
-            const response = await fetch(`${API_BASE_URL}/senhas/resetar-atendimento`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao resetar atendimento:', error);
-            throw error;
-        }
-    }
-
-    static async chamarUltimaSenhaNovamente(roomId, profissional) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/senhas/chamar-ultima-novamente`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    room_id: roomId, 
-                    profissional: profissional 
-                })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Erro ao chamar última senha novamente:', error);
-            throw error;
-        }
+        const senha = await response.json();
+        return senha;
+    } catch (error) {
+        console.error("Erro ao buscar senha atual:", error);
+        return null;
     }
 }
 
-// Funções utilitárias
-class Utils {
-    static salvarSalaAtual(salaId) {
-        localStorage.setItem('salaAtual', salaId);
-    }
-
-    static obterSalaAtual() {
-        return localStorage.getItem('salaAtual');
-    }
-
-    static removerSalaAtual() {
-        localStorage.removeItem('salaAtual');
+async function atenderSenha(senhaNumero) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/senhas/atender`, {
+            method: \"POST\",
+            headers: {
+                \"Content-Type\": \"application/json\"
+            },
+            body: JSON.stringify({ senha_numero: senhaNumero })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Erro ao atender senha:", error);
+        return null;
     }
 }
+
 

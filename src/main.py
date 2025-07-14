@@ -1,21 +1,21 @@
 import os
 import sys
-# DON'T CHANGE THIS !!!
+# DON\'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from src.models import db
 
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), \'static\'))
+app.config[\'SECRET_KEY\'] = \'asdf#FGSgvasgf$5$WGT\'
 
 # Habilitar CORS para todas as rotas
 CORS(app)
 
 # Configurar banco de dados
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config[\'SQLALCHEMY_DATABASE_URI\'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), \'database\', \'app.db\')}"
+app.config[\'SQLALCHEMY_TRACK_MODIFICATIONS\'] = False
 db.init_app(app)
 
 # Importar modelos após inicializar o db
@@ -37,15 +37,15 @@ with app.app_context():
     # Criar salas padrão se não existirem
     if Sala.query.count() == 0:
         salas_padrao = [
-            {'nome': 'SALA 01', 'descricao': 'Sala de atendimento 01'},
-            {'nome': 'SALA 02', 'descricao': 'Sala de atendimento 02'},
-            {'nome': 'SALA 03', 'descricao': 'Sala de atendimento 03'},
-            {'nome': 'SALA 04', 'descricao': 'Sala de atendimento 04'},
-            {'nome': 'SALA 05', 'descricao': 'Sala de atendimento 05'},
-            {'nome': 'SALA 06', 'descricao': 'Sala de atendimento 06'},
-            {'nome': 'SALA 07', 'descricao': 'Sala de atendimento 07'},
-            {'nome': 'SALA 08', 'descricao': 'Sala de atendimento 08'},
-            {'nome': 'SALA 09', 'descricao': 'Sala de atendimento 09'}
+            {\'nome\': \'SALA 01\', \'descricao\': \'Sala de atendimento 01\'},
+            {\'nome\': \'SALA 02\', \'descricao\': \'Sala de atendimento 02\'},
+            {\'nome\': \'SALA 03\', \'descricao\': \'Sala de atendimento 03\'},
+            {\'nome\': \'SALA 04\', \'descricao\': \'Sala de atendimento 04\'},
+            {\'nome\': \'SALA 05\', \'descricao\': \'Sala de atendimento 05\'},
+            {\'nome\': \'SALA 06\', \'descricao\': \'Sala de atendimento 06\'},
+            {\'nome\': \'SALA 07\', \'descricao\': \'Sala de atendimento 07\'},
+            {\'nome\': \'SALA 08\', \'descricao\': \'Sala de atendimento 08\'},
+            {\'nome\': \'SALA 09\', \'descricao\': \'Sala de atendimento 09\'}
         ]
         
         for sala_data in salas_padrao:
@@ -69,15 +69,17 @@ def serve_static_files(path=""):
     if path != "" and os.path.exists(os.path.join(static_folder_path, path)):
         return send_from_directory(static_folder_path, path)
     else:
-        index_path = os.path.join(static_folder_path, 'index.html')
+        index_path = os.path.join(static_folder_path, \'index.html\')
         if os.path.exists(index_path):
-            return send_from_directory(static_folder_path, 'index.html')
+            return send_from_directory(static_folder_path, \'index.html\')
         else:
             return "index.html not found", 404
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == \'__main__\':
+    app.run(host=\'0.0.0.0\', port=5000, debug=True)
+
+
 
 
 

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang=\"pt-BR\">
+<head>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>Área do Profissional - Sistema de Senhas</title>
+    <link rel=\"stylesheet\" href=\"styles.css\">
+    <script src=\"api.js\"></script>
+</head>
+<body>
+    <div class=\"container\">
+        <header>
+            <img src=\"logosepem.png\" alt=\"Logo SEPEM\">
+            <h1>Sistema de Senhas</h1>
+        </header>
+        <nav>
+            <a href=\"index.html\">Início</a>
+            <a href=\"gerar-senha.html\">Gerar Senha</a>
+            <a href=\"profissional.html\">Área do Profissional</a>
+            <a href=\"tv.html\">Exibição TV</a>
+        </nav>
+
+        <h2 class=\"section-title\">Área do Profissional</h2>
+
+        <div class=\"form-group\">
+            <label for=\"room-select\">Selecione a Sala:</label>
+            <select id=\"room-select\" class=\"form-control\"></select>
+        </div>
+
+        <div class=\"form-group\">
+            <label for=\"profissional-name\">Nome do Profissional (Opcional):</label>
+            <input type=\"text\" id=\"profissional-name\" placeholder=\"Seu nome\">
+        </div>
+
+        <button class=\"button\" onclick=\"handleChamarProximaSenha()\">Chamar Próxima Senha</button>
+        <button class=\"button button-warning\" onclick=\"handleChamarUltimaSenhaNovamente()\">Chamar Última Senha Novamente</button>
+
+        <div id=\"message\" class=\"message\" style=\"display:none;\"></div>
+
+        <h3 class=\"section-title\">Senhas em Espera</h3>
+        <ul id=\"senhas-espera-list\"></ul>
+
+        <h3 class=\"section-title\">Senhas Chamadas</h3>
+        <ul id=\"senhas-chamadas-list\"></ul>
+
+        <div class=\"footer\">
+            <p>⚡ DESENVOLVIDO POR SAULO RODRIGO REG. 36.364-8 - 2025</p>
+        </div>
+    </div>
+
+    <script>
+        const notificationSound = new Audio(\"chamada.wav\");
+
+        document.addEventListener(\"DOMContentLoaded\", async () => {
+            const roomSelect = document.getElementById(\"room-select\");
+            const salas = await fetchSalas();
+            salas.forEach(sala => {
+                const option = document.createElement(\"option\");
+                option.value = sala.id;
+                option.textContent = sala.nome;
+                roomSelect.appendChild(option);
+            });
+
+            // Pre-selecionar sala se houver room_id na URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomIdFromUrl = urlParams.get(\"room_id\");
+            if (roomIdFromUrl) {
+                roomSelect.value = roomIdFromUrl;
+            }
+
+            roomSelect.addEventListener(\"change\", updateLists);
+            updateLists();
+            setInterval(updateLists, 5000); // Atualiza a cada 5 segundos
+        });
+
+        async function updateLists() {
+            const roomSelect = document.getElementById(\"room-select\");
+            const roomId = roomSelect.value;
+
+            const senhasEmEspera = await fetchSenhasEmEspera(roomId);
+            const senhasChamadas = await fetchSenhasChamadas(roomId);
+
+            displaySenhas(senhasEmEspera, \"senhas-espera-list\");
+            displaySenhas(senhasChamadas, \"senhas-chamadas-list\");
+        }
+
+        function displaySenhas(senhas, listId) {
+            const list = document.getElementById(listId);
+            list.innerHTML = \"\";
+            if (senhas.length === 0) {
+                list.innerHTML = \"<li>Nenhuma senha.</li>\";
+                return;
+            }
+            senhas.forEach(senha => {
+                const li = document.createElement(\"li\");
+                li.textContent = `${senha.numero} (${senha.sala}) - Gerada em: ${new Date(senha.gerada_em || senha.chamada_em).toLocaleTimeString()}`;
+                if (senha.profissional) {
+                    li.textContent += ` - Profissional: ${senha.profissional}`;
+                }
+                list.appendChild(li);
+            });
+        }
+
+        async function handleChamarProximaSenha() {
+            const roomSelect = document.getElementById(\"room-select\");
+            const roomId = roomSelect.value;
+            const profissionalName = document.getElementById(\"profissional-name\").value;
+            const messageDiv = document.getElementById(\"message\");
+
+            if (!roomId) {
+                messageDiv.textContent = \"Por favor, selecione uma sala.\";
+                messageDiv.className = \"message error\";
+                messageDiv.style.display = \"block\";
+                return;
+            }
+
+            const result = await chamarSenha(roomId, profissionalName);
+            if (result && result.senha) {
+                messageDiv.textContent = `Senha ${result.senha.numero} da ${result.senha.sala} chamada!`;
+                messageDiv.className = \"message success\";
+                notificationSound.play();
+            } else {
+                messageDiv.textContent = result.message || result.error || \"Erro ao chamar senha.\";
+                messageDiv.className = \"message error\";
+            }
+            messageDiv.style.display = \"block\";
+            updateLists();
+        }
+
+        async function handleChamarUltimaSenhaNovamente() {
+            const roomSelect = document.getElementById(\"room-select\");
+            const roomId = roomSelect.value;
+            const profissionalName = document.getElementById(\"profissional-name\").value;
+            const messageDiv = document.getElementById(\"message\");
+
+            if (!roomId) {
+                messageDiv.textContent = \"Por favor, selecione uma sala.\";
+                messageDiv.className = \"message error\";
+                messageDiv.style.display = \"block\";
+                return;
+            }
+
+            const result = await chamarUltimaSenhaNovamente(roomId, profissionalName);
+            if (result && result.senha) {
+                messageDiv.textContent = `Última senha ${result.senha.numero} da ${result.senha.sala} chamada novamente!`;
+                messageDiv.className = \"message success\";
+                notificationSound.play();
+            } else {
+                messageDiv.textContent = result.message || result.error || \"Erro ao chamar última senha novamente.\";
+                messageDiv.className = \"message error\";
+            }
+            messageDiv.style.display = \"block\";
+            updateLists();
+        }
+    </script>
+</body>
+</html>
+
+

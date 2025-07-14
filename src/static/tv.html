@@ -1,186 +1,93 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang=\"pt-BR\">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
     <title>Painel TV - Sistema de Senhas</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel=\"stylesheet\" href=\"styles.css\">
+    <script src=\"api.js\"></script>
 </head>
 <body>
-    <div class="tv-container">
-        <div class="tv-header">
-            <div class="tv-header-content">
-                <img src="logosepem.png" alt="Logo SEPEM" class="tv-logo">
-                <div class="tv-title-section">
-                    <h1>Sistema de Senhas</h1>
-                    <p class="tv-subtitle">Painel de Chamadas</p>
-                </div>
+    <div class=\"tv-display-container\">
+        <header class=\"tv-header\">
+            <img src=\"logosepem.png\" alt=\"Logo SEPEM\">
+            <h1>Sistema de Senhas</h1>
+        </header>
+        <div class=\"current-password-display\">
+            <h2>Próxima Senha:</h2>
+            <div class=\"password-number\" id=\"current-password-number\">--</div>
+            <div class=\"password-details\" id=\"current-password-details\">
+                <p>Sala: <span id=\"current-password-room\">--</span></p>
+                <p>Profissional: <span id=\"current-password-professional\">--</span></p>
+                <p>Horário: <span id=\"current-password-time\">--</span></p>
             </div>
         </div>
 
-        <div id="senhas-chamadas-container">
-            <!-- Senhas chamadas serão exibidas aqui -->
-        </div>
-
-        <div class="footer">
-            ⚡ DESENVOLVIDO POR SAULO RODRIGO REG. 36.364-8 - 2025
+        <div class=\"called-passwords-grid\" id=\"called-passwords-grid\">
+            <!-- Senhas chamadas serão inseridas aqui -->
         </div>
     </div>
 
-    <!-- Elemento de áudio para o som de chamada -->
-    <audio id="som-chamada" preload="auto">
-        <source src="chamada.wav" type="audio/wav">
-    </audio>
+    <audio id=\"notification-sound\" src=\"chamada.wav\" preload=\"auto\"></audio>
 
-    <script src="api.js"></script>
     <script>
-        let ultimasSenhasChamadas = [];
+        const notificationSound = document.getElementById(\'notification-sound\');
+        let lastCalledPasswords = [];
 
-        function getSalaKey(nomeSala) {
-            const nome = nomeSala.toLowerCase();
-            if (nome.includes('sala 01')) return 'sala01';
-            if (nome.includes('sala 02')) return 'sala02';
-            if (nome.includes('sala 03')) return 'sala03';
-            if (nome.includes('sala 04')) return 'sala04';
-            if (nome.includes('sala 05')) return 'sala05';
-            if (nome.includes('sala 06')) return 'sala06';
-            if (nome.includes('sala 07')) return 'sala07';
-            if (nome.includes('sala 08')) return 'sala08';
-            if (nome.includes('sala 09')) return 'sala09';
-            return 'default';
+        function playSound() {
+            notificationSound.play().catch(e => console.error(\"Erro ao tocar som:\", e));
         }
 
-        async function carregarSenhasChamadas() {
-            try {
-                console.log('Carregando senhas chamadas...');
-                const senhas = await SenhaAPI.obterTodasSenhasChamadas();
-                console.log('Senhas recebidas:', senhas);
-                const container = document.getElementById('senhas-chamadas-container');
-                
-                if (!senhas || senhas.length === 0) {
-                    console.log('Nenhuma senha encontrada');
-                    container.innerHTML = `
-                        <div class="nenhuma-senha">
-                            <h2>Nenhuma senha sendo chamada</h2>
-                            <p>Aguardando chamadas de todas as salas</p>
-                        </div>
-                    `;
-                    return;
+        async function updateTVDisplay() {
+            const allCalledPasswords = await fetchTodasSenhasChamadas();
+            const grid = document.getElementById(\'called-passwords-grid\');
+            grid.innerHTML = \'\'; // Limpa o grid
+
+            // Verifica se há novas senhas chamadas
+            if (allCalledPasswords.length > lastCalledPasswords.length) {
+                const newPasswords = allCalledPasswords.filter(np => !lastCalledPasswords.some(lp => lp.numero === np.numero && lp.timestamp === np.timestamp));
+                if (newPasswords.length > 0) {
+                    playSound();
                 }
-                
-                console.log(`Exibindo ${senhas.length} senhas chamadas`);
-                
-                // Verificar se há novas senhas chamadas para tocar o som
-                const novasSenhas = senhas.filter(senha => 
-                    !ultimasSenhasChamadas.some(antiga => 
-                        antiga.numero === senha.numero && antiga.sala_nome === senha.sala_nome
-                    )
-                );
-                
-                if (novasSenhas.length > 0 && ultimasSenhasChamadas.length > 0) {
-                    console.log('Tocando som para novas senhas:', novasSenhas);
-                    tocarSomChamada();
-                }
-                
-                ultimasSenhasChamadas = [...senhas];
-                
-                container.innerHTML = `
-                    <div class="senhas-chamadas-grid">
-                        ${senhas.map(senha => {
-                            const salaKey = getSalaKey(senha.sala_nome);
-                            return `
-                                <div class="senha-chamada-card" data-sala="${salaKey}">
-                                    <div class="senha-chamada-numero">${senha.numero}</div>
-                                    <div class="senha-chamada-sala">${senha.sala_nome}</div>
-                                    <div class="senha-chamada-profissional">👨‍💼 ${senha.profissional || 'Profissional'}</div>
-                                    <div class="senha-chamada-horario">🕐 ${new Date(senha.chamada_em).toLocaleTimeString()}</div>
-                                </div>
-                            `;
-                        }).join('')}
+            }
+            lastCalledPasswords = allCalledPasswords;
+
+            if (allCalledPasswords.length === 0) {
+                document.getElementById(\'current-password-number\').innerText = \'--\';
+                document.getElementById(\'current-password-room\').innerText = \'--\';
+                document.getElementById(\'current-password-professional\').innerText = \'--\';
+                document.getElementById(\'current-password-time\').innerText = \'--\';
+                return;
+            }
+
+            // Exibe a última senha chamada em destaque
+            const latestPassword = allCalledPasswords[0];
+            document.getElementById(\'current-password-number\').innerText = latestPassword.numero;
+            document.getElementById(\'current-password-room\').innerText = latestPassword.sala;
+            document.getElementById(\'current-password-professional\').innerText = latestPassword.profissional || \'Não Informado\';
+            document.getElementById(\'current-password-time\').innerText = new Date(latestPassword.timestamp).toLocaleTimeString();
+
+            // Exibe as senhas chamadas no grid (excluindo a última se já estiver em destaque)
+            allCalledPasswords.slice(1).forEach(senha => {
+                const card = document.createElement(\'div\');
+                card.className = `called-password-card sala-${senha.numero.split(\'-\
+                card.innerHTML = `
+                    <div class=\"password-number\">${senha.numero}</div>
+                    <div class=\"password-details\">
+                        <p>Sala: ${senha.sala}</p>
+                        <p>Profissional: ${senha.profissional || \'Não Informado\'}</p>
+                        <p>Horário: ${new Date(senha.timestamp).toLocaleTimeString()}</p>
                     </div>
                 `;
-            } catch (error) {
-                console.error('Erro ao carregar senhas chamadas:', error);
-                document.getElementById('senhas-chamadas-container').innerHTML = `
-                    <div class="nenhuma-senha">
-                        <h2>Erro ao carregar senhas</h2>
-                        <p>Tentando reconectar...</p>
-                    </div>
-                `;
-            }
+                grid.appendChild(card);
+            });
         }
 
-        function tocarSomChamada() {
-            try {
-                const audio = document.getElementById('som-chamada');
-                audio.currentTime = 0;
-                audio.play().catch(error => {
-                    console.log('Não foi possível reproduzir o som:', error);
-                    tocarSomGerado();
-                });
-            } catch (error) {
-                console.log('Erro ao tocar som:', error);
-                tocarSomGerado();
-            }
-        }
-
-        // Gerar som de chamada se não existir
-        function gerarSomChamada() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const duration = 2;
-                const sampleRate = audioContext.sampleRate;
-                const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
-                const data = buffer.getChannelData(0);
-
-                for (let i = 0; i < buffer.length; i++) {
-                    const t = i / sampleRate;
-                    if (t < 0.5) {
-                        data[i] = Math.sin(2 * Math.PI * 800 * t) * 0.3 * (1 - t * 2);
-                    } else if (t < 1.0) {
-                        data[i] = Math.sin(2 * Math.PI * 1000 * t) * 0.3 * (2 - t * 2);
-                    } else {
-                        data[i] = 0;
-                    }
-                }
-
-                const source = audioContext.createBufferSource();
-                source.buffer = buffer;
-                source.connect(audioContext.destination);
-                
-                // Salvar para uso posterior
-                window.somChamadaBuffer = buffer;
-                window.audioContext = audioContext;
-            } catch (error) {
-                console.log('Não foi possível gerar som de chamada:', error);
-            }
-        }
-
-        function tocarSomGerado() {
-            try {
-                if (window.audioContext && window.somChamadaBuffer) {
-                    const source = window.audioContext.createBufferSource();
-                    source.buffer = window.somChamadaBuffer;
-                    source.connect(window.audioContext.destination);
-                    source.start();
-                }
-            } catch (error) {
-                console.log('Erro ao tocar som gerado:', error);
-            }
-        }
-
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', function() {
-            // Gerar som de chamada
-            gerarSomChamada();
-            
-            // Carregar senhas iniciais
-            carregarSenhasChamadas();
-            
-            // Atualizar a cada 3 segundos
-            setInterval(carregarSenhasChamadas, 3000);
-        });
+        // Atualiza a cada 3 segundos
+        setInterval(updateTVDisplay, 3000);
+        updateTVDisplay(); // Chama na inicialização
     </script>
 </body>
 </html>
+
 
