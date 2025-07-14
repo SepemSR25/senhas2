@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Senhas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <img src="logosepem.png" alt="Logo SEPEM" class="header-logo">
+            <div class="header-title-section">
+                <h1>Sistema de Senhas</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="section">
+                <h2>Selecionar Sala</h2>
+                <div id="sala-selecionada" class="status-info" style="display: none;">
+                    <h4>Sala Selecionada: <span id="sala-nome">Nenhuma sala selecionada</span></h4>
+                </div>
+                
+                <div class="salas-grid" id="salas-container">
+                    <!-- Salas serão carregadas aqui -->
+                </div>
+                
+                <button class="btn btn-success" onclick="mostrarNovaSala()">+ Nova Sala</button>
+                
+                <div id="nova-sala-form" class="nova-sala-form">
+                    <h3>Criar Nova Sala</h3>
+                    <div class="form-group">
+                        <label for="nova-sala-nome">Nome da Sala:</label>
+                        <input type="text" id="nova-sala-nome" class="form-control" placeholder="Ex: Atendimento Médico">
+                    </div>
+                    <div class="form-group">
+                        <label for="nova-sala-descricao">Descrição:</label>
+                        <input type="text" id="nova-sala-descricao" class="form-control" placeholder="Ex: Consultas médicas gerais">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="criarSala()">Criar Sala</button>
+                        <button class="btn btn-secondary" onclick="cancelarNovaSala()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Ações Principais</h2>
+                <div class="actions-grid">
+                    <a href="gerar-senha.html" class="action-card">
+                        <span class="action-icon">🎫</span>
+                        <h3>Gerar Senha</h3>
+                        <p>Retire sua senha e aguarde ser chamado</p>
+                    </a>
+                    
+                    <a href="profissional.html" class="action-card">
+                        <span class="action-icon">👨‍💼</span>
+                        <h3>Área do Profissional</h3>
+                        <p>Chame a próxima senha da fila</p>
+                    </a>
+                    
+                    <a href="tv.html" class="action-card">
+                        <span class="action-icon">📺</span>
+                        <h3>Exibição TV</h3>
+                        <p>Painel para exibição na televisão</p>
+                    </a>
+                    
+                    <div class="action-card reset-card" onclick="resetarAtendimento()">
+                        <span class="action-icon">🔄</span>
+                        <h3>Resetar Atendimento</h3>
+                        <p>Limpar display da TV</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        ⚡ DESENVOLVIDO POR SAULO RODRIGO REG. 36.364-8 - 2025
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        let salaAtual = null;
+
+        async function carregarSalas() {
+            try {
+                const salas = await SalaAPI.listarSalas();
+                const container = document.getElementById('salas-container');
+                
+                if (salas.length === 0) {
+                    container.innerHTML = '<p>Nenhuma sala encontrada. Crie uma nova sala para começar.</p>';
+                    return;
+                }
+                
+                container.innerHTML = salas.map(sala => `
+                    <div class="sala-card ${salaAtual && salaAtual.id === sala.id ? 'selected' : ''}" data-sala-id="${sala.id}">
+                        <span class="sala-icon">${getSalaIcon(sala.nome)}</span>
+                        <h3>${sala.nome}</h3>
+                        <p>${sala.descricao}</p>
+                        <div class="sala-actions">
+                            <button class="btn btn-primary" onclick="selecionarSala(${sala.id}, '${sala.nome}')">Selecionar</button>
+                            <button class="btn btn-danger" onclick="excluirSala(${sala.id})" title="Excluir sala">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar salas:', error);
+                document.getElementById('salas-container').innerHTML = '<p>Erro ao carregar salas.</p>';
+            }
+        }
+
+        function getSalaIcon(nomeSala) {
+            const nome = nomeSala.toLowerCase();
+            if (nome.includes('caixa') || nome.includes('pagamento')) return '💰';
+            if (nome.includes('informação') || nome.includes('informações')) return '📋';
+            if (nome.includes('médico') || nome.includes('consulta')) return '🏥';
+            if (nome.includes('atendimento')) return '🎯';
+            return '🏢';
+        }
+
+        function selecionarSala(salaId, nomeSala) {
+            salaAtual = { id: salaId, nome: nomeSala };
+            localStorage.setItem('salaAtual', JSON.stringify(salaAtual));
+            
+            document.getElementById('sala-nome').textContent = nomeSala;
+            document.getElementById('sala-selecionada').style.display = 'block';
+            
+            // Atualizar visual das salas
+            document.querySelectorAll('.sala-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-sala-id="${salaId}"]`).classList.add('selected');
+        }
+
+        function mostrarNovaSala() {
+            document.getElementById('nova-sala-form').classList.add('show');
+        }
+
+        function cancelarNovaSala() {
+            document.getElementById('nova-sala-form').classList.remove('show');
+            document.getElementById('nova-sala-nome').value = '';
+            document.getElementById('nova-sala-descricao').value = '';
+        }
+
+        async function criarSala() {
+            const nome = document.getElementById('nova-sala-nome').value.trim();
+            const descricao = document.getElementById('nova-sala-descricao').value.trim();
+            
+            if (!nome) {
+                alert('Nome da sala é obrigatório');
+                return;
+            }
+            
+            try {
+                await SalaAPI.criarSala(nome, descricao);
+                cancelarNovaSala();
+                carregarSalas();
+                alert('Sala criada com sucesso!');
+            } catch (error) {
+                console.error('Erro ao criar sala:', error);
+                alert('Erro ao criar sala: ' + error.message);
+            }
+        }
+
+        async function excluirSala(salaId) {
+            if (!confirm('Tem certeza que deseja excluir esta sala? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            
+            try {
+                await SalaAPI.excluirSala(salaId);
+                
+                // Se a sala excluída era a selecionada, limpar seleção
+                if (salaAtual && salaAtual.id === salaId) {
+                    salaAtual = null;
+                    localStorage.removeItem('salaAtual');
+                    document.getElementById('sala-selecionada').style.display = 'none';
+                }
+                
+                carregarSalas();
+                alert('Sala excluída com sucesso!');
+            } catch (error) {
+                console.error('Erro ao excluir sala:', error);
+                alert('Erro ao excluir sala: ' + error.message);
+            }
+        }
+
+        async function resetarAtendimento() {
+            if (!confirm('Tem certeza que deseja resetar o display da TV? Isso irá limpar todas as senhas chamadas.')) {
+                return;
+            }
+
+            try {
+                await SenhaAPI.resetarAtendimento();
+                alert('Display da TV resetado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao resetar atendimento:', error);
+                alert('Erro ao resetar atendimento: ' + error.message);
+            }
+        }
+
+        // Carregar sala selecionada do localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const salaSalva = localStorage.getItem('salaAtual');
+            if (salaSalva) {
+                salaAtual = JSON.parse(salaSalva);
+                document.getElementById('sala-nome').textContent = salaAtual.nome;
+                document.getElementById('sala-selecionada').style.display = 'block';
+            }
+            carregarSalas();
+        });
+    </script>
+</body>
+</html>
+

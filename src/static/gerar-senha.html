@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerar Senha - Sistema de Senhas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <img src="logosepem.png" alt="Logo SEPEM" class="header-logo">
+            <div class="header-title-section">
+                <h1>Gerar Senha</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="section">
+                <h2>Sala Selecionada</h2>
+                <div id="sala-info" class="status-info">
+                    <h4>Sala: <span id="sala-nome">Carregando...</span></h4>
+                    <p id="sala-descricao">Carregando descrição...</p>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <button class="btn btn-primary btn-large" onclick="gerarSenha()">Gerar Senha</button>
+                </div>
+
+                <div id="senha-gerada" class="senha-gerada" style="display: none;">
+                    <h3>Sua Senha</h3>
+                    <div class="senha-numero-grande" id="senha-numero">-</div>
+                    <p>Aguarde ser chamado</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Fila de Espera</h2>
+                <div id="fila-senhas" class="fila-senhas">
+                    <p>Carregando fila...</p>
+                </div>
+
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="index.html" class="btn btn-secondary">Voltar ao Início</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        ⚡ DESENVOLVIDO POR SAULO RODRIGO REG. 36.364-8 - 2025
+    </div>
+
+    <script src="api.js"></script>
+    <script>
+        let salaAtual = null;
+
+        async function carregarSalaAtual() {
+            const salaSalva = localStorage.getItem('salaAtual');
+            if (!salaSalva) {
+                alert('Nenhuma sala selecionada. Redirecionando para a página inicial.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            salaAtual = JSON.parse(salaSalva);
+            
+            try {
+                const sala = await SalaAPI.obterSala(salaAtual.id);
+                document.getElementById('sala-nome').textContent = sala.nome;
+                document.getElementById('sala-descricao').textContent = sala.descricao;
+            } catch (error) {
+                console.error('Erro ao carregar sala:', error);
+                alert('Erro ao carregar informações da sala.');
+            }
+        }
+
+        async function carregarFilaEspera() {
+            try {
+                const senhas = await SenhaAPI.listarSenhasEspera(salaAtual.id);
+                const container = document.getElementById('fila-senhas');
+                
+                if (senhas.length === 0) {
+                    container.innerHTML = '<p>Nenhuma senha na fila de espera.</p>';
+                    return;
+                }
+                
+                container.innerHTML = senhas.map(senha => `
+                    <div class="senha-item">
+                        <span class="senha-numero">${senha.numero}</span>
+                        <span class="senha-status">Aguardando</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar fila:', error);
+                document.getElementById('fila-senhas').innerHTML = '<p>Erro ao carregar fila de espera.</p>';
+            }
+        }
+
+        async function gerarSenha() {
+            try {
+                const resultado = await SenhaAPI.gerarSenha(salaAtual.id);
+                
+                // Mostrar senha gerada
+                document.getElementById('senha-numero').textContent = resultado.numero;
+                document.getElementById('senha-gerada').style.display = 'block';
+                
+                // Atualizar dados
+                await atualizarDados();
+                
+                // Scroll para a senha gerada
+                document.getElementById('senha-gerada').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Erro ao gerar senha:', error);
+                alert('Erro ao gerar senha: ' + error.message);
+            }
+        }
+
+        async function atualizarDados() {
+            await carregarFilaEspera();
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async function() {
+            await carregarSalaAtual();
+            await atualizarDados();
+            
+            // Atualizar dados a cada 5 segundos
+            setInterval(atualizarDados, 5000);
+        });
+    </script>
+</body>
+</html>
+
