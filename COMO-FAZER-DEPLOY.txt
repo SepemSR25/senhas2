@@ -1,0 +1,38 @@
+COMO FAZER DEPLOY GRATUITO NO VERCEL - SISTEMA DE SENHAS SEPEM
+================================================================
+
+PASSO 1: BAIXAR O PROJETO
+- Clique em "Download" ou "Export" aqui no Replit
+- Salve todos os arquivos em uma pasta no seu computador
+
+PASSO 2: CRIAR CONTA NO VERCEL
+- Acesse: https://vercel.com
+- Clique em "Sign Up" (Cadastrar)
+- Use sua conta do Google ou GitHub (mais fácil)
+
+PASSO 3: FAZER O DEPLOY
+- No painel do Vercel, clique "New Project"
+- Clique "Browse" e selecione a pasta do projeto
+- Clique "Upload" para enviar todos os arquivos
+- Clique "Deploy" (pode demorar 1-2 minutos)
+
+PASSO 4: SEU LINK ESTARÁ PRONTO!
+- Você receberá um link tipo: https://seu-projeto.vercel.app
+- Este link funcionará 24/7 gratuitamente
+- Você pode compartilhar com toda a equipe
+
+ROTAS DO SISTEMA:
+- /           → Página de gerar senhas
+- /dashboard  → Painel para profissionais
+- /tv         → Display para TV/monitor
+
+IMPORTANTE:
+✓ 100% gratuito
+✓ Link permanente 
+✓ Funciona 24h por dia
+✓ SSL seguro (https://)
+✓ Sem limite de uso normal
+
+Se tiver dúvidas, me chame que te ajudo!
+
+Desenvolvido por Saulo Rodrigo REG. 36.364-8 - 2025
